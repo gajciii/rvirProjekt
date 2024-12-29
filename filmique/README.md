@@ -1,6 +1,6 @@
-# filmique
+# vreme_app
 
-Aplikacija za filme
+A new Flutter project.
 
 ## Getting Started
 

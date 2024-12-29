@@ -1,11 +1,11 @@
 {
-    "name": "filmique",
-    "short_name": "filmique",
+    "name": "vreme_app",
+    "short_name": "vreme_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Aplikacija za filme",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
