@@ -69,72 +69,107 @@ class _SignUpPageState extends State<SignUpPage> {
       appBar: AppBar(
         title: Text("Registracija", style: Theme.of(context).appBarTheme.titleTextStyle),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                controller: firstNameController,
-                decoration: InputDecoration(
-                  labelText: "Ime",
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: firstNameController,
+                    decoration: InputDecoration(
+                      labelText: "Ime",
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: lastNameController,
-                decoration: InputDecoration(
-                  labelText: "Priimek",
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: lastNameController,
+                    decoration: InputDecoration(
+                      labelText: "Priimek",
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: "Geslo",
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: passwordController,
+                    decoration: InputDecoration(
+                      labelText: "Geslo",
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    obscureText: true,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                ),
-                obscureText: true,
-                style: Theme.of(context).textTheme.bodyMedium,
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: signUp,
+                    child: const Text("Registracija"),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: signUp,
-                child: const Text("Registracija"),
-              ),
-            ],
+            ),
           ),
-        ),
+          // Image with curve at the bottom
+          ClipPath(
+            clipper: TopCurveClipper(),
+            child: Image.asset(
+              'lib/images/grafika.png',
+              fit: BoxFit.cover,
+              height: 400,
+              width: double.infinity,
+            ),
+          ),
+        ],
       ),
     );
+  }
+}
+
+class TopCurveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final Path path = Path();
+    path.moveTo(0, 50);
+    path.quadraticBezierTo(
+      size.width / 2, 0,
+      size.width, 50,
+    );
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) {
+    return false;
   }
 }
