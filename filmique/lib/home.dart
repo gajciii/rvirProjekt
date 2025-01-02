@@ -57,7 +57,6 @@ class _MainPageState extends State<MainPage> {
       final searchResults = await _tmdbService.searchMovies(query);
       setState(() {
         this.searchResults = searchResults;
-        isSearching = false;
       });
     } catch (e) {
       setState(() {
@@ -69,12 +68,24 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      searchResults = [];
+      isSearching = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         leading: const CustomDropdownMenu(),
-        title: const Text("Filmique"),
+        title: Text(
+          "Filmique",
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -92,88 +103,114 @@ class _MainPageState extends State<MainPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: "Search",
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+            // Search Bar
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: "Search for movies...",
+                        hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
+                        border: InputBorder.none,
+                        prefixIcon: const Icon(Icons.search, color: Colors.white54),
                       ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _searchMovies,
-                  child: const Text("Search"),
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                    onPressed: _searchMovies,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: _clearSearch,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
-            if (isSearching)
-              const Expanded(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (searchResults.isNotEmpty)
-              Expanded(
-                child: ListView.builder(
-                  itemCount: searchResults.length,
-                  itemBuilder: (context, index) {
-                    final movie = searchResults[index];
-                    return MovieListItem(movie: movie);
-                  },
-                ),
-              )
-            else
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Priporočila zate:",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 150,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: newMovies.length,
-                          itemBuilder: (context, index) {
-                            final movie = newMovies[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: MovieCard(movie: movie),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Novo:",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: recommendations.length,
-                        itemBuilder: (context, index) {
-                          final movie = recommendations[index];
-                          return MovieListItem(movie: movie);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+
+            // Content
+            Expanded(
+              child: isSearching && searchResults.isNotEmpty
+                  ? _buildSearchResults()
+                  : _buildDefaultContent(),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    return ListView.builder(
+      itemCount: searchResults.length,
+      itemBuilder: (context, index) {
+        final movie = searchResults[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: MovieListItem(movie: movie),
+        );
+      },
+    );
+  }
+
+  Widget _buildDefaultContent() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Novi filmi",
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: newMovies.length,
+              itemBuilder: (context, index) {
+                final movie = newMovies[index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: MovieCard(movie: movie),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Priporočila",
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 10),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: recommendations.length,
+            itemBuilder: (context, index) {
+              final movie = recommendations[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: MovieListItem(movie: movie),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -188,16 +225,23 @@ class MovieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final posterPath = movie['poster_path'] ?? '';
     return Container(
-      width: 100,
+      width: 150,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         image: posterPath.isNotEmpty
             ? DecorationImage(
           image: NetworkImage('https://image.tmdb.org/t/p/w200$posterPath'),
           fit: BoxFit.cover,
         )
             : null,
-        color: Colors.grey[300],
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(2, 2),
+          ),
+        ],
       ),
     );
   }
@@ -214,45 +258,31 @@ class MovieListItem extends StatelessWidget {
     final title = movie['title'] ?? 'Unknown';
     final rating = movie['vote_average']?.toString() ?? 'N/A';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Container(
-            width: 100,
-            height: 150,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              image: posterPath.isNotEmpty
-                  ? DecorationImage(
-                image: NetworkImage('https://image.tmdb.org/t/p/w200$posterPath'),
-                fit: BoxFit.cover,
-              )
-                  : null,
-              color: Colors.grey[300],
-            ),
-            child: posterPath.isEmpty
-                ? const Center(child: Text('No Image'))
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        leading: Container(
+          width: 50,
+          height: 75,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            image: posterPath.isNotEmpty
+                ? DecorationImage(
+              image: NetworkImage('https://image.tmdb.org/t/p/w200$posterPath'),
+              fit: BoxFit.cover,
+            )
                 : null,
+            color: Colors.grey[300],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  '⭐ $rating',
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        subtitle: Text(
+          '⭐ $rating',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ),
     );
   }

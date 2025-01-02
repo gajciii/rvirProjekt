@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'home.dart';
 
@@ -20,16 +19,13 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> signUp() async {
     try {
-      // Ustvari uporabnika v Firebase Authentication
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      // Pridobi uporabnikov UID
       String uid = userCredential.user!.uid;
 
-      // Shrani uporabnikove podatke v Firestore
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
         'email': emailController.text.trim(),
@@ -38,7 +34,6 @@ class _SignUpPageState extends State<SignUpPage> {
         'registrationDate': DateTime.now(),
       });
 
-      // Navigacija na glavno stran
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainPage()),
@@ -59,51 +54,77 @@ class _SignUpPageState extends State<SignUpPage> {
           message = 'Napaka pri registraciji.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(content: Text(message, style: Theme.of(context).textTheme.bodyMedium)),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Napaka pri registraciji.')),
+        SnackBar(content: Text('Napaka pri registraciji.', style: Theme.of(context).textTheme.bodyMedium)),
       );
     }
   }
 
   @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    firstNameController.dispose();
-    lastNameController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Registracija")),
+      appBar: AppBar(
+        title: Text("Registracija", style: Theme.of(context).appBarTheme.titleTextStyle),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
                 controller: firstNameController,
-                decoration: const InputDecoration(labelText: "Ime"),
+                decoration: InputDecoration(
+                  labelText: "Ime",
+                  filled: true,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: lastNameController,
-                decoration: const InputDecoration(labelText: "Priimek"),
+                decoration: InputDecoration(
+                  labelText: "Priimek",
+                  filled: true,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: "Email",
+                  filled: true,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: passwordController,
-                decoration: const InputDecoration(labelText: "Geslo"),
+                decoration: InputDecoration(
+                  labelText: "Geslo",
+                  filled: true,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
                 obscureText: true,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 20),
               ElevatedButton(

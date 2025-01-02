@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CustomDropdownMenu extends StatelessWidget {
-  const CustomDropdownMenu ({super.key});
+  const CustomDropdownMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,29 +20,29 @@ class CustomDropdownMenu extends StatelessWidget {
         }
       },
       itemBuilder: (BuildContext context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: "home",
           child: ListTile(
-            leading: Icon(Icons.home),
-            title: Text("Home"),
+            leading: const Icon(Icons.home, color: Colors.white),
+            title: Text("Home", style: Theme.of(context).textTheme.bodyLarge),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: "profile",
           child: ListTile(
-            leading: Icon(Icons.person),
-            title: Text("Profile"),
+            leading: const Icon(Icons.person, color: Colors.white),
+            title: Text("Profile", style: Theme.of(context).textTheme.bodyLarge),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: "badges",
           child: ListTile(
-            leading: Icon(Icons.star),
-            title: Text("Badges"),
+            leading: const Icon(Icons.star, color: Colors.white),
+            title: Text("Badges", style: Theme.of(context).textTheme.bodyLarge),
           ),
         ),
       ],
-      icon: const Icon(Icons.menu),
+      icon: const Icon(Icons.menu, color: Colors.white),
     );
   }
 }
