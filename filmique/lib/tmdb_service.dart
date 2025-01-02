@@ -18,4 +18,17 @@ class TMDBService {
       throw Exception('Failed to load popular movies');
     }
   }
+
+  Future<List<dynamic>> searchMovies(String query) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/search/movie?api_key=$_apiKey&query=$query'),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['results'];
+    } else {
+      throw Exception('Failed to search for movies');
+    }
+  }
+
 }

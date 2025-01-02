@@ -23,12 +23,13 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
         useMaterial3: true,
       ),
+      routes: {
+        '/home': (context) => const MainPage(),
+        '/login': (context) => const LoginPage(),
+      },
       home: FirebaseAuth.instance.currentUser == null
           ? const LoginPage()
           : const MainPage(),
     );
   }
 }
-
-
-
