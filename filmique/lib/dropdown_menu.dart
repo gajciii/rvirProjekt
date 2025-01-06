@@ -97,9 +97,8 @@ class _SlideInMenu extends StatelessWidget {
                       text: "Badges",
                       onTap: () {
                         Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Badges page coming soon!')),
-                        );
+                        Navigator.pushReplacementNamed(context, '/badges');
+
                       },
                     ),
                   ],

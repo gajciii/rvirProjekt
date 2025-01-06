@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'badges.dart';
 import 'home.dart';
 import 'login.dart';
 import 'app_theme.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const MainPage(),
         '/login': (context) => const LoginPage(),
+        '/badges': (context) => const BadgesPage(),
       },
       home: FirebaseAuth.instance.currentUser == null
           ? const LoginPage()
