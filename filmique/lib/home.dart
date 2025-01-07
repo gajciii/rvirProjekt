@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vreme_app/tmdb_service.dart';
 import 'login.dart';
 import 'dropdown_menu.dart';
+import 'movie.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -283,6 +284,14 @@ class MovieListItem extends StatelessWidget {
           '⭐ $rating',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MovieDetailsPage(movieId: movie['id']),
+            ),
+          );
+        },
       ),
     );
   }
