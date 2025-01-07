@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:vreme_app/profile.dart';
 import 'badges.dart';
 import 'home.dart';
 import 'login.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const MainPage(),
         '/login': (context) => const LoginPage(),
         '/badges': (context) => const BadgesPage(),
+        '/profile': (context) => const ProfilePage(),
       },
       home: FirebaseAuth.instance.currentUser == null
           ? const LoginPage()

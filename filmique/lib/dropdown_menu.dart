@@ -86,9 +86,7 @@ class _SlideInMenu extends StatelessWidget {
                       text: "Profile",
                       onTap: () {
                         Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Profile page coming soon!')),
-                        );
+                        Navigator.pushReplacementNamed(context, '/profile');
                       },
                     ),
                     const SizedBox(height: 40),
