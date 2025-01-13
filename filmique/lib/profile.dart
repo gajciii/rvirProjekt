@@ -109,7 +109,7 @@ class ProfilePage extends StatelessWidget {
                   // Profile Sections (Moji seznami, Ogledani filmi, Želim si ogledat)
                   _buildProfileSection(context, "Watched"),
                   const SizedBox(height: 10),
-                  _buildProfileSection(context, "To-be-watched"),
+                  _buildProfileSection(context, "To-Watch"),
                   const SizedBox(height: 20),
                   _buildBadgesSection(context),
                   const SizedBox(height: 20),
@@ -199,7 +199,7 @@ class ProfilePage extends StatelessWidget {
   }
 
 
-  Widget _buildProfileSection(BuildContext context, String title) {
+  Widget _buildProfileSection(BuildContext context, String listName) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -223,42 +223,63 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
+            // Naslov
             Text(
-              title,
+              listName,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 12),
-
-            // Placeholder with modern icon
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.list,
-                      size: 40,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'No $title yet',
+            // Seznam filmov
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                  .collection(listName)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No $listName movies yet',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  );
+                }
+
+                final movies = snapshot.data!.docs;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: movies.length,
+                  itemBuilder: (context, index) {
+                    final movie = movies[index];
+                    return ListTile(
+                      leading: movie['poster_path'] != null
+                          ? Image.network(
+                        'https://image.tmdb.org/t/p/w92${movie['poster_path']}',
+                        fit: BoxFit.cover,
+                      )
+                          : const Icon(Icons.movie),
+                      title: Text(movie['title'] ?? 'Unknown Title'),
+                      subtitle: Text(
+                          (movie['genres'] as List?)?.map((genre) => genre['name']).join(', ') ??
+                              'Unknown genres', // Privzeto sporočilo, če ni žanrov
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),

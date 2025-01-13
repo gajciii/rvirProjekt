@@ -1,6 +1,36 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+Future<void> addMovieToList(String listName, Map<String, dynamic> movieDetails) async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception("User is not logged in");
+    }
+
+    final movieId = movieDetails['id'].toString();
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection(listName) // "To-Watch" or "Watched"
+        .doc(movieId)
+        .set({
+      'title': movieDetails['title'],
+      'release_date': movieDetails['release_date'],
+      'poster_path': movieDetails['poster_path'],
+      'genres': movieDetails['genres'],
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    print('$listName list updated with movie: ${movieDetails['title']}');
+  } catch (e) {
+    print('Error adding movie to $listName: $e');
+  }
+}
 
 class MovieDetailsPage extends StatefulWidget {
   final int movieId;
@@ -119,6 +149,31 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
               movieDetails!['overview'] ?? 'No description available.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    await addMovieToList('Watched', movieDetails!);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to Watched')),
+                    );
+                  },
+                  child: const Text('Watched'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await addMovieToList('To-Watch', movieDetails!);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to To-Watch')),
+                    );
+                  },
+                  child: const Text('To-Watch'),
+                ),
+              ],
+            ),
+
           ],
         ),
       )
