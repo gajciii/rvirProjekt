@@ -7,6 +7,70 @@ import 'dropdown_menu.dart';
 class ProfilePage extends StatelessWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
+  Future<void> _removeMovie(String listName, String movieId) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection(listName)
+          .doc(movieId)
+          .delete();
+      print('$listName movie removed: $movieId');
+    } catch (e) {
+      print('Error removing movie from $listName: $e');
+      throw Exception('Failed to remove movie');
+    }
+  }
+
+  Future<void> _moveMovie(String fromList, String toList, String movieId) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    try {
+      final movieDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection(fromList)
+          .doc(movieId)
+          .get();
+
+      if (!movieDoc.exists) {
+        throw Exception("Movie not found in $fromList");
+      }
+
+      final movieData = movieDoc.data();
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection(toList)
+          .doc(movieId)
+          .set(movieData!);
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection(fromList)
+          .doc(movieId)
+          .delete();
+
+      print("Moved movie $movieId from $fromList to $toList");
+    } catch (e) {
+      print("Error moving movie: $e");
+      throw Exception("Failed to move movie");
+    }
+  }
+
+
   Future<Map<String, dynamic>> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -96,7 +160,6 @@ class ProfilePage extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 20),
-
                   _buildProfileSection(context, "Watched"),
                   const SizedBox(height: 10),
                   _buildProfileSection(context, "To-Watch"),
@@ -145,12 +208,11 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
             Text(
               'My Badges',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -214,7 +276,7 @@ class ProfilePage extends StatelessWidget {
               listName,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -258,8 +320,54 @@ class ProfilePage extends StatelessWidget {
                           : const Icon(Icons.movie),
                       title: Text(movie['title'] ?? 'Unknown Title'),
                       subtitle: Text(
-                          (movie['genres'] as List?)?.map((genre) => genre['name']).join(', ') ??
-                              'Unknown genres',
+                        (movie['genres'] as List?)
+                            ?.map((genre) => genre['name'])
+                            .join(', ') ??
+                            'Unknown genres',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (listName == "To-Watch")
+                            IconButton(
+                              icon: const Icon(Icons.check, color: Colors.pinkAccent),
+                              onPressed: () async {
+                                try {
+                                  await _moveMovie("To-Watch", "Watched", movie.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Movie moved to Watched list!")),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Error moving movie: $e")),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.pinkAccent),
+                            onPressed: () async {
+                              try {
+                                await _removeMovie(listName, movie.id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Movie removed!")),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Error removing movie: $e")),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -271,5 +379,6 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
 
 }
