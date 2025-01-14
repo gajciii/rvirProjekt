@@ -25,6 +25,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _fetchMovies();
+    _fetchRecommendations();
   }
 
   Future<void> _fetchMovies() async {
@@ -38,6 +39,36 @@ class _MainPageState extends State<MainPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching movies: $e')),
       );
+    }
+  }
+
+  Future<void> _fetchRecommendations() async {
+    try {
+      final genreCounts = await fetchUserGenres();
+      if (genreCounts.isEmpty) return;
+
+      final topGenre = genreCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+      final genreId = await _fetchGenreIdByName(topGenre);
+
+      final recommendedMovies = await _tmdbService.fetchMoviesByGenre(genreId);
+      setState(() {
+        recommendations = recommendedMovies;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching recommendations: $e')),
+      );
+    }
+  }
+
+  Future<String> _fetchGenreIdByName(String genreName) async {
+    try {
+      final genres = await _tmdbService.fetchGenres();
+      final genre = genres.firstWhere((g) => g['name'] == genreName, orElse: () => null);
+      if (genre == null) throw Exception('Genre not found');
+      return genre['id'].toString();
+    } catch (e) {
+      throw Exception('Error fetching genre ID: $e');
     }
   }
 
@@ -188,7 +219,17 @@ class _MainPageState extends State<MainPage> {
                 final movie = newMovies[index];
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: MovieCard(movie: movie),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MovieDetailsPage(movieId: movie['id']),
+                        ),
+                      );
+                    },
+                    child: MovieCard(movie: movie),
+                  ),
                 );
               },
             ),
@@ -225,6 +266,8 @@ class MovieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final posterPath = movie['poster_path'] ?? '';
+    final title = movie['title'] ?? 'Unknown';
+
     return Container(
       width: 150,
       decoration: BoxDecoration(
@@ -243,6 +286,21 @@ class MovieCard extends StatelessWidget {
             offset: const Offset(2, 2),
           ),
         ],
+      ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+          color: Colors.black54,
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ),
     );
   }

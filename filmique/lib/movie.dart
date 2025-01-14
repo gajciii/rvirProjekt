@@ -32,6 +32,33 @@ Future<void> addMovieToList(String listName, Map<String, dynamic> movieDetails) 
   }
 }
 
+Future<Map<String, int>> fetchUserGenres() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    throw Exception("User is not logged in");
+  }
+
+  final snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('Watched')
+      .get();
+
+  final genreCounts = <String, int>{};
+
+  for (final doc in snapshot.docs) {
+    final genres = doc.data()['genres'] as List<dynamic>?;
+    if (genres != null) {
+      for (final genre in genres) {
+        final genreName = genre['name'] as String;
+        genreCounts[genreName] = (genreCounts[genreName] ?? 0) + 1;
+      }
+    }
+  }
+
+  return genreCounts;
+}
+
 class MovieDetailsPage extends StatefulWidget {
   final int movieId;
 
@@ -181,3 +208,5 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     );
   }
 }
+
+

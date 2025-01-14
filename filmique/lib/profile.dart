@@ -10,17 +10,14 @@ class ProfilePage extends StatelessWidget {
   Future<Map<String, dynamic>> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
 
-    // Check if the user is logged in
     if (user == null) {
       print('User not logged in');
       throw Exception("User not logged in");
     }
 
-    // Print UID if user is logged in
     print('User: ${user.uid}');
 
     try {
-      // Fetch user profile data from Firestore
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
       if (!doc.exists) {
@@ -28,7 +25,6 @@ class ProfilePage extends StatelessWidget {
         throw Exception("User profile not found");
       } else {
         print('User profile loaded');
-        // Return the user profile data as a Map<String, dynamic>
         return doc.data() as Map<String, dynamic>;
       }
     } catch (e) {
@@ -81,7 +77,6 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Profile Header
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: Theme.of(context).colorScheme.primary,
@@ -91,22 +86,17 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Full Name
                   Text(
                     "$firstName $lastName",
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 10),
-
-                  // Email
                   Text(
                     email,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 20),
 
-                  // Profile Sections (Moji seznami, Ogledani filmi, Želim si ogledat)
                   _buildProfileSection(context, "Watched"),
                   const SizedBox(height: 10),
                   _buildProfileSection(context, "To-Watch"),
@@ -114,8 +104,6 @@ class ProfilePage extends StatelessWidget {
                   _buildBadgesSection(context),
                   const SizedBox(height: 20),
 
-
-                  // Edit Profile Button
                   ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -167,20 +155,19 @@ class ProfilePage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Horizontal Scrollable Badges
             Container(
-              height: 80, // Height of the badge section
+              height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: 10, // Set the number of badges to display
+                itemCount: 10,
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: CircleAvatar(
-                      radius: 30, // Size of the badge
+                      radius: 30,
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       child: Text(
-                        '${index + 1}', // Display badge number for now
+                        '${index + 1}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -223,7 +210,6 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Naslov
             Text(
               listName,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -232,7 +218,6 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Seznam filmov
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
@@ -274,7 +259,7 @@ class ProfilePage extends StatelessWidget {
                       title: Text(movie['title'] ?? 'Unknown Title'),
                       subtitle: Text(
                           (movie['genres'] as List?)?.map((genre) => genre['name']).join(', ') ??
-                              'Unknown genres', // Privzeto sporočilo, če ni žanrov
+                              'Unknown genres',
                       ),
                     );
                   },
