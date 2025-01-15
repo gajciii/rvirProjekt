@@ -1,45 +1,69 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
 import 'dropdown_menu.dart';
 import 'login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class BadgesPage extends StatelessWidget {
+class BadgesPage extends StatefulWidget {
   const BadgesPage({super.key});
 
+  @override
+  _BadgesPageState createState() => _BadgesPageState();
+}
+
+class _BadgesPageState extends State<BadgesPage> {
   final List<Map<String, String>> badges = const [
-    {
-      "name": "High Standards",
-      "description": "For giving 20 movies a rating of 1 or 2 stars."
-    },
-    {
-      "name": "Cinephile",
-      "description": "Awarded for watching 50 movies."
-    },
-    {
-      "name": "Binge Master",
-      "description": "Awarded for watching 5 movies in a single day."
-    },
-    {
-      "name": "100 Club",
-      "description": "Awarded for watching 100 movies."
-    },
-    {
-      "name": "250 Club",
-      "description": "Awarded for watching 250 movies."
-    },
-    {
-      "name": "500 Club",
-      "description": "Awarded for watching 500 movies."
-    },
-    {
-      "name": "Retro Fan",
-      "description": "Awarded for watching a movie from every decade since 1900."
-    }
+    {"name": "High Standards", "description": "For giving 20 movies a rating of 1 or 2 stars."},
+    {"name": "Cinephile", "description": "Awarded for watching 50 movies."},
+    {"name": "Binge Master", "description": "Awarded for watching 5 movies in a single day."},
+    {"name": "100 Club", "description": "Awarded for watching 100 movies."},
+    {"name": "250 Club", "description": "Awarded for watching 250 movies."},
+    {"name": "500 Club", "description": "Awarded for watching 500 movies."},
+    {"name": "Retro Fan", "description": "Awarded for watching a movie from every decade since 1900."}
   ];
+
+  List<String> userBadges = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserBadges();
+  }
+
+  Future<void> _loadUserBadges() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      final badgesDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('badges')
+          .doc('badgeList')
+          .get();
+
+      if (badgesDoc.exists) {
+        setState(() {
+          userBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('Napaka pri nalaganju značk: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: const CustomDropdownMenu(),
@@ -71,6 +95,7 @@ class BadgesPage extends StatelessWidget {
                 child: BadgeCard(
                   badge: badges[0],
                   isLarge: true,
+                  hasBadge: userBadges.contains(badges[0]["name"]),
                 ),
               ),
             ),
@@ -84,7 +109,10 @@ class BadgesPage extends StatelessWidget {
                 ),
                 itemCount: badges.length - 1,
                 itemBuilder: (context, index) {
-                  return BadgeCard(badge: badges[index + 1]);
+                  return BadgeCard(
+                    badge: badges[index + 1],
+                    hasBadge: userBadges.contains(badges[index + 1]["name"]),
+                  );
                 },
               ),
             ),
@@ -95,11 +123,13 @@ class BadgesPage extends StatelessWidget {
   }
 }
 
+
 class BadgeCard extends StatefulWidget {
   final Map<String, String> badge;
   final bool isLarge;
+  final bool hasBadge;
 
-  const BadgeCard({required this.badge, this.isLarge = false, super.key});
+  const BadgeCard({required this.badge, this.isLarge = false, required this.hasBadge, super.key});
 
   @override
   _BadgeCardState createState() => _BadgeCardState();
@@ -166,13 +196,19 @@ class _BadgeCardState extends State<BadgeCard> with SingleTickerProviderStateMix
   Widget _buildFront() {
     return Card(
       shape: AppTheme.theme.cardTheme.shape,
-      color: Color(0xD553639D),
+      color: const Color(0xD553639D),
       elevation: AppTheme.theme.cardTheme.elevation,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            widget.hasBadge
+                ? Image.asset(
+              'lib/images/badge.png',
+              width: widget.isLarge ? 80 : 50,
+              height: widget.isLarge ? 80 : 50,
+            )
+                : Icon(
               Icons.shield,
               size: widget.isLarge ? 80 : 50,
               color: Colors.white,
@@ -203,7 +239,7 @@ class _BadgeCardState extends State<BadgeCard> with SingleTickerProviderStateMix
   Widget _buildBack() {
     return Card(
       shape: AppTheme.theme.cardTheme.shape,
-      color: Color(0xD553639D),
+      color: const Color(0xD553639D),
       elevation: AppTheme.theme.cardTheme.elevation,
       child: Center(
         child: Padding(

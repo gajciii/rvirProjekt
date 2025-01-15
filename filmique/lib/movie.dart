@@ -27,8 +27,57 @@ Future<void> addMovieToList(String listName, Map<String, dynamic> movieDetails) 
     });
 
     print('$listName list updated with movie: ${movieDetails['title']}');
+
+    if (listName == 'Watched') {
+      await checkAndAwardBadgeBingeMaster(user.uid);
+    }
   } catch (e) {
     print('Error adding movie to $listName: $e');
+  }
+}
+
+Future<void> checkAndAwardBadgeBingeMaster(String userId) async {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    // Pridobi seznam gledanih filmov uporabnika iz Firestore
+    final watchedCollection = await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('Watched')
+        .get();
+
+    // Filtriraj filme, gledane v zadnjih 24 urah
+    final now = DateTime.now();
+    final watchedToday = watchedCollection.docs.where((doc) {
+      final timestamp = (doc.data()['timestamp'] as Timestamp).toDate();
+      return timestamp.year == now.year &&
+          timestamp.month == now.month &&
+          timestamp.day == now.day;
+    }).toList();
+
+    // Preveri, če je gledanih vsaj 5 filmov
+    if (watchedToday.length >= 5) {
+      // Preveri, če obstaja kolekcija značk, in dodaj značko
+      final badgesRef = firestore.collection('users').doc(userId).collection('badges');
+      final badgesDoc = await badgesRef.doc('badgeList').get();
+
+      if (badgesDoc.exists) {
+        // Če značke že obstajajo, jih posodobi
+        final List<dynamic> badges = badgesDoc.data()?['badges'] ?? [];
+        if (!badges.contains("Binge Master")) {
+          badges.add("Binge Master");
+          await badgesRef.doc('badgeList').update({'badges': badges});
+        }
+      } else {
+        // Če značke še ne obstajajo, jih ustvari
+        await badgesRef.doc('badgeList').set({
+          'badges': ["Binge Master"],
+        });
+      }
+    }
+  } catch (e) {
+    print('Napaka pri preverjanju ali dodajanju značke: $e');
   }
 }
 
