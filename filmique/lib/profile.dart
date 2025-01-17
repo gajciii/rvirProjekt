@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app_theme.dart';
 import 'dropdown_menu.dart';
+import 'login.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -110,11 +111,22 @@ class ProfilePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-              Navigator.pop(context);
+            onPressed: () async {
+              try {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                      (route) => false,
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logout failed: $e')),
+                );
+              }
             },
           ),
+
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -216,36 +228,82 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
-            Container(
-              height: 80,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 10,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text(
-                        '${index + 1}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .collection('badges')
+                  .doc('badgeList')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+                if (!snapshot.hasData || snapshot.data?.data() == null) {
+                  return const Center(
+                    child: Text(
+                      'No badges yet. Check out the badges page!',
+                      style: TextStyle(fontSize: 16),
                     ),
                   );
-                },
-              ),
+                }
+
+                final badgeData = snapshot.data!.data() as Map<String, dynamic>;
+                final badges = List<String>.from(badgeData['badges'] ?? []);
+
+                if (badges.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No badges yet. Check out the badges page!',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  );
+                }
+
+                return SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: badges.length,
+                    itemBuilder: (context, index) {
+                      final badgeName = badges[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 40,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              child: Image.asset(
+                                'lib/images/badge.png', // Badge image
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              badgeName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
           ],
         ),
       ),
     );
   }
+
 
 
   Widget _buildProfileSection(BuildContext context, String listName) {

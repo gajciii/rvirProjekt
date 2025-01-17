@@ -21,33 +21,37 @@ class _LoginPageState extends State<LoginPage> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      Navigator.pushReplacement(
+      // Navigate to MainPage and clear the navigation stack
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const MainPage()),
+            (route) => false,
       );
     } on FirebaseAuthException catch (e) {
       String message;
       switch (e.code) {
         case 'user-not-found':
-          message = 'Nobenega uporabnika s tem emailom ni mogoče najti.';
+          message = 'No user found with that email.';
           break;
         case 'invalid-email':
-          message = 'Vnesen email je napačen.';
+          message = 'Invalid email address.';
           break;
         case 'wrong-password':
-          message = 'Napačno geslo za uporabnika.';
+          message = 'Incorrect password.';
           break;
         default:
-          message = 'Napačni vneseni podatki, poskusite ponovno.';
+          message = 'Login failed. Please try again.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      _showSnackBar(message);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Napaka pri prijavi.')),
-      );
+      _showSnackBar('An error occurred. Please try again.');
     }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -60,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Prijava")),
+      appBar: AppBar(title: const Text("Login")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -73,13 +77,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
             TextField(
               controller: passwordController,
-              decoration: const InputDecoration(labelText: "Geslo"),
+              decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: signIn,
-              child: const Text("Prijava"),
+              child: const Text("Login"),
             ),
             TextButton(
               onPressed: () {
@@ -88,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                   MaterialPageRoute(builder: (context) => const SignUpPage()),
                 );
               },
-              child: const Text("Še nimate računa? Registrirajte se"),
+              child: const Text("Don't have an account? Sign up"),
             ),
           ],
         ),
@@ -96,4 +100,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

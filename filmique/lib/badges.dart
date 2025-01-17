@@ -4,6 +4,7 @@ import 'app_theme.dart';
 import 'dropdown_menu.dart';
 import 'login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:confetti/confetti.dart';
 
 class BadgesPage extends StatefulWidget {
   const BadgesPage({super.key});
@@ -13,6 +14,7 @@ class BadgesPage extends StatefulWidget {
 }
 
 class _BadgesPageState extends State<BadgesPage> {
+
   final List<Map<String, String>> badges = const [
     {"name": "High Standards", "description": "For giving 20 movies a rating of 1 or 2 stars."},
     {"name": "Cinephile", "description": "Awarded for watching 50 movies."},
@@ -26,11 +28,84 @@ class _BadgesPageState extends State<BadgesPage> {
   List<String> userBadges = [];
   bool isLoading = true;
 
+  ConfettiController? _confettiController;
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     _loadUserBadges();
   }
+
+  @override
+  void dispose() {
+    _confettiController?.dispose();
+    super.dispose();
+  }
+
+  void _showBadgeEarned(String badgeName) {
+    _confettiController?.play();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, //da user ne more zapret pop-up
+      builder: (BuildContext context) {
+        Future.delayed(const Duration(seconds: 5), () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        });
+
+        return Dialog(
+          backgroundColor: Colors.white.withOpacity(0.0),
+
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 250),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '🎉 Badge Earned! 🎉',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    badgeName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 60,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController!,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      shouldLoop: false,
+                      colors: const [Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
+
 
   Future<void> _loadUserBadges() async {
     try {
@@ -45,18 +120,27 @@ class _BadgesPageState extends State<BadgesPage> {
           .get();
 
       if (badgesDoc.exists) {
+        final newBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
+
+        for (final badge in newBadges) {
+          if (!userBadges.contains(badge)) {
+            _showBadgeEarned(badge);
+          }
+        }
+
         setState(() {
-          userBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
+          userBadges = newBadges;
         });
       }
     } catch (e) {
-      print('Napaka pri nalaganju značk: $e');
+      print('Error loading badges: $e');
     } finally {
       setState(() {
         isLoading = false;
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -75,12 +159,19 @@ class _BadgesPageState extends State<BadgesPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
+            onPressed: () async {
+              try {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                      (route) => false,
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logout failed: $e')),
+                );
+              }
             },
           ),
         ],
@@ -176,7 +267,7 @@ class _BadgeCardState extends State<BadgeCard> with SingleTickerProviderStateMix
       child: AnimatedBuilder(
         animation: _animation,
         builder: (context, child) {
-          final angle = _animation.value * 3.1416; // Flip angle in radians
+          final angle = _animation.value * 3.1416;
           return Transform(
             alignment: Alignment.center,
             transform: Matrix4.rotationY(angle),
