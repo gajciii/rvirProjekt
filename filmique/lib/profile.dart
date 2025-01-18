@@ -71,6 +71,24 @@ class ProfilePage extends StatelessWidget {
     }
   }
 
+  Future<void> _updateUserData(String firstName, String lastName) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'firstName': firstName, 'lastName': lastName});
+      print('User profile updated');
+    } catch (e) {
+      print('Error updating user profile: $e');
+      throw Exception("Failed to update user profile");
+    }
+  }
 
   Future<Map<String, dynamic>> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -96,6 +114,64 @@ class ProfilePage extends StatelessWidget {
       print('Error fetching user profile: $e');
       throw Exception("Error fetching user profile: $e");
     }
+  }
+
+  void _showEditProfileDialog(BuildContext context, Map<String, dynamic> userData) {
+    final firstNameController = TextEditingController(text: userData['firstName']);
+    final lastNameController = TextEditingController(text: userData['lastName']);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: firstNameController,
+                decoration: const InputDecoration(labelText: 'First Name'),
+              ),
+              TextField(
+                controller: lastNameController,
+                decoration: const InputDecoration(labelText: 'Last Name'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final firstName = firstNameController.text.trim();
+                final lastName = lastNameController.text.trim();
+
+                if (firstName.isNotEmpty && lastName.isNotEmpty) {
+                  try {
+                    await _updateUserData(firstName, lastName);
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Profile updated successfully!')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error updating profile: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -126,7 +202,6 @@ class ProfilePage extends StatelessWidget {
               }
             },
           ),
-
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -178,13 +253,8 @@ class ProfilePage extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildBadgesSection(context),
                   const SizedBox(height: 20),
-
                   ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Edit profile feature coming soon!")),
-                      );
-                    },
+                    onPressed: () => _showEditProfileDialog(context, data),
                     child: const Text("Edit Profile"),
                   ),
                 ],

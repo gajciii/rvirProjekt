@@ -38,8 +38,6 @@ Future<void> addMovieToList(String listName, Map<String, dynamic> movieDetails) 
   }
 }
 
-
-
 Future<void> checkAndAwardBadgeBingeMaster(String userId) async {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -123,7 +121,6 @@ Future<void> checkAndAwardBadgeCinephile(String userId) async {
   }
 }
 
-
 Future<void> checkAndAwardBadgeRetroFan(String userId) async {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -178,7 +175,23 @@ Future<void> checkAndAwardBadgeRetroFan(String userId) async {
   }
 }
 
-
+void _showSuccessDialog(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Success'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Zapri dialog
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
 Future<Map<String, int>> fetchUserGenres() async {
   final user = FirebaseAuth.instance.currentUser;
@@ -206,6 +219,110 @@ Future<Map<String, int>> fetchUserGenres() async {
 
   return genreCounts;
 }
+
+Future<void> _rateMovie(BuildContext context, double rating, Map<String, dynamic> movieDetails) async {
+  const String apiUrl = 'https://api.themoviedb.org/3/movie/';
+  const String apiKey = 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwZDlhMjkyNDczYjgwNzBiNDA2MzlkODI4NzkxNGZiZCIsIm5iZiI6MTczMjEwMjMxNS4yMjIwMDAxLCJzdWIiOiI2NzNkYzhhYjc1N2IyODQyZDlkOGFiYjMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.ZJqk5ScIvPfSojaJ-VI-gl_k5DHuSdLje8HGGRk-gmo';
+
+  final String url = '$apiUrl${movieDetails['id']}/rating';
+  final Map<String, String> headers = {
+    'Authorization': apiKey,
+    'Content-Type': 'application/json;charset=utf-8',
+  };
+  final String body = jsonEncode({'value': rating});
+
+  try {
+    print('Sending POST request to $url');
+    print('Headers: $headers');
+    print('Body: $body');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: headers,
+      body: body,
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 201) {
+      print("Response koda je 201");
+
+      print("začetek shranjevanja v firebase");
+      final user = FirebaseAuth.instance.currentUser;
+      print(user);
+      if (user != null) {
+        final movieId = movieDetails['id'].toString();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('ratings') // Nova zbirka za ocene filmov
+            .doc(movieId)
+            .set({
+          'movie_id': movieId,
+          'rating': rating,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+        print('Movie rating saved in Firestore');
+      }
+    } else {
+      throw Exception('Failed to rate movie. Status: ${response.statusCode}');
+    }
+  } catch (error) {
+    print('Error occurred: $error');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $error')),
+    );
+  }
+}
+
+void _showRatingModal(BuildContext context, Map<String, dynamic> movieDetails) {
+  final TextEditingController ratingController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Rate the Movie'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter a rating (1-10):'),
+            TextField(
+              controller: ratingController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Enter rating',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final rating = double.tryParse(ratingController.text);
+              if (rating != null && rating >= 1 && rating <= 10) {
+                _rateMovie(context, rating, movieDetails); // Posredujemo context in movieDetails.
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid rating between 1 and 10!')),
+                );
+              }
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
 class MovieDetailsPage extends StatefulWidget {
   final int movieId;
@@ -345,6 +462,24 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                     );
                   },
                   child: const Text('To-Watch'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    if (movieDetails != null) {
+                      _showRatingModal(context, movieDetails!); // Posredujemo movieDetails.
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Movie details not available')),
+                      );
+                    }
+                  },
+                  child: const Text('RATE'),
                 ),
               ],
             ),

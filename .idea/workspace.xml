@@ -5,14 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d67a09d7-22ee-4cc7-bc78-c508560c37f3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/filmique/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/filmique/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/filmique/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/filmique/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/filmique/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/filmique/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/filmique/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/filmique/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/filmique/lib/movie.dart" beforeDir="false" afterPath="$PROJECT_DIR$/filmique/lib/movie.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/filmique/lib/profile.dart" beforeDir="false" afterPath="$PROJECT_DIR$/filmique/lib/profile.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
