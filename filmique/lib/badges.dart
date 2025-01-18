@@ -5,6 +5,7 @@ import 'dropdown_menu.dart';
 import 'login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:confetti/confetti.dart';
+import 'dart:async';
 
 class BadgesPage extends StatefulWidget {
   const BadgesPage({super.key});
@@ -117,9 +118,23 @@ class _BadgesPageState extends State<BadgesPage> {
           .get();
 
       if (badgesDoc.exists) {
+        List<String> fetchedBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
+        List<String> newBadges = [];
+
+        for (var badge in badges) {
+          if (!userBadges.contains(badge['name']) && fetchedBadges.contains(badge['name'])) {
+            newBadges.add(badge['name']!);
+          }
+        }
+
         setState(() {
-          userBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
+          userBadges = fetchedBadges;
         });
+
+        // Show newly earned badges one by one
+        for (var badge in newBadges) {
+          await _showBadgeEarnedSequentially(badge);
+        }
       }
     } catch (e) {
       print('Error loading badges: $e');
@@ -129,6 +144,73 @@ class _BadgesPageState extends State<BadgesPage> {
       });
     }
   }
+
+  Future<void> _showBadgeEarnedSequentially(String badgeName) async {
+    // Trigger the confetti animation and dialog
+    Completer<void> completer = Completer<void>();
+
+    _confettiController?.play();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        Future.delayed(const Duration(seconds: 5), () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+            completer.complete();
+          }
+        });
+
+        return Dialog(
+          backgroundColor: Colors.white.withOpacity(0.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 250),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '🎉 Badge Earned! 🎉',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    badgeName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 60,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController!,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      shouldLoop: false,
+                      colors: const [Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    return completer.future; // Wait for the dialog to close before continuing
+  }
+
 
 
 
