@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vreme_app/tmdb_service.dart';
@@ -40,6 +41,32 @@ class _MainPageState extends State<MainPage> {
         SnackBar(content: Text('Error fetching movies: $e')),
       );
     }
+  }
+  Future<Map<String, int>> fetchUserGenres() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception("User is not logged in");
+    }
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('Watched')
+        .get();
+
+    final genreCounts = <String, int>{};
+
+    for (final doc in snapshot.docs) {
+      final genres = doc.data()['genres'] as List<dynamic>?;
+      if (genres != null) {
+        for (final genre in genres) {
+          final genreName = genre['name'] as String;
+          genreCounts[genreName] = (genreCounts[genreName] ?? 0) + 1;
+        }
+      }
+    }
+
+    return genreCounts;
   }
 
   Future<void> _fetchRecommendations() async {

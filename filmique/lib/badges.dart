@@ -16,7 +16,7 @@ class BadgesPage extends StatefulWidget {
 class _BadgesPageState extends State<BadgesPage> {
 
   final List<Map<String, String>> badges = const [
-    {"name": "High Standards", "description": "For giving 20 movies a rating of 1 or 2 stars."},
+    {"name": "High Standards", "description": "For giving 10 movies a rating of 1 or 2 stars."},
     {"name": "Cinephile", "description": "Awarded for watching 50 movies."},
     {"name": "Binge Master", "description": "Awarded for watching 5 movies in a single day."},
     {"name": "100 Club", "description": "Awarded for watching 100 movies."},
@@ -104,9 +104,6 @@ class _BadgesPageState extends State<BadgesPage> {
   }
 
 
-
-
-
   Future<void> _loadUserBadges() async {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -120,16 +117,8 @@ class _BadgesPageState extends State<BadgesPage> {
           .get();
 
       if (badgesDoc.exists) {
-        final newBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
-
-        for (final badge in newBadges) {
-          if (!userBadges.contains(badge)) {
-            _showBadgeEarned(badge);
-          }
-        }
-
         setState(() {
-          userBadges = newBadges;
+          userBadges = List<String>.from(badgesDoc.data()?['badges'] ?? []);
         });
       }
     } catch (e) {
@@ -140,6 +129,7 @@ class _BadgesPageState extends State<BadgesPage> {
       });
     }
   }
+
 
 
   @override
