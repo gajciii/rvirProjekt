@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'main.dart';
+
 
 
 class MovieDetailsPage extends StatefulWidget {
@@ -33,9 +35,11 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
   Map<String, dynamic>? movieDetails;
   bool isLoading = true;
 
-
-  void _showBadgeEarned(BuildContext context, String badgeName) {
+  void _showBadgeEarned(String badgeName) {
     _confettiController.play();
+
+    final context = navigatorKey.currentState?.overlay?.context; // Access valid context
+    if (context == null) return; // Ensure context is valid
 
     showDialog(
       context: context,
@@ -96,7 +100,6 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
 
 
-
   Future<void> addMovieToList(String listName, Map<String, dynamic> movieDetails, BuildContext context) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -109,7 +112,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .collection(listName) // "To-Watch" or "Watched"
+          .collection(listName) //"To-Watch" ali "Watched"
           .doc(movieId)
           .set({
         'title': movieDetails['title'],
@@ -135,14 +138,12 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-      // Pridobi seznam gledanih filmov uporabnika iz Firestore
       final watchedCollection = await firestore
           .collection('users')
           .doc(userId)
           .collection('Watched')
           .get();
 
-      // Filtriraj filme, gledane v zadnjih 24 urah
       final now = DateTime.now();
       final watchedToday = watchedCollection.docs.where((doc) {
         final timestamp = (doc.data()['timestamp'] as Timestamp).toDate();
@@ -151,22 +152,18 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
             timestamp.day == now.day;
       }).toList();
 
-      // Preveri, če je gledanih vsaj 5 filmov
       if (watchedToday.length >= 5) {
-        // Preveri, če obstaja kolekcija značk, in dodaj značko
         final badgesRef = firestore.collection('users').doc(userId).collection('badges');
         final badgesDoc = await badgesRef.doc('badgeList').get();
 
         if (badgesDoc.exists) {
-          // Če značke že obstajajo, jih posodobi
           final List<dynamic> badges = badgesDoc.data()?['badges'] ?? [];
           if (!badges.contains("Binge Master")) {
             badges.add("Binge Master");
             await badgesRef.doc('badgeList').update({'badges': badges});
-            _showBadgeEarned(context, "Binge Master");
+            _showBadgeEarned("Binge Master");
           }
         } else {
-          // Če značke še ne obstajajo, jih ustvari
           await badgesRef.doc('badgeList').set({
             'badges': ["Binge Master"],
           });
@@ -181,29 +178,24 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-      // Pridobi seznam gledanih filmov uporabnika iz Firestore
       final watchedCollection = await firestore
           .collection('users')
           .doc(userId)
           .collection('Watched')
           .get();
 
-      // Preveri, ali je uporabnik pogledal vsaj 50 filmov
-      if (watchedCollection.docs.length >= 6) {
-        // Preveri, če obstaja kolekcija značk, in dodaj značko
+      if (watchedCollection.docs.length >= 10) {
         final badgesRef = firestore.collection('users').doc(userId).collection('badges');
         final badgesDoc = await badgesRef.doc('badgeList').get();
 
         if (badgesDoc.exists) {
-          // Če značke že obstajajo, jih posodobi
           final List<dynamic> badges = badgesDoc.data()?['badges'] ?? [];
           if (!badges.contains("Cinephile")) {
             badges.add("Cinephile");
             await badgesRef.doc('badgeList').update({'badges': badges});
-            _showBadgeEarned(context, "Cinephile");
+            _showBadgeEarned("Cinephile");
           }
         } else {
-          // Če značke še ne obstajajo, jih ustvari
           await badgesRef.doc('badgeList').set({
             'badges': ["Cinephile"],
           });
@@ -219,18 +211,15 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-      // Pridobi seznam gledanih filmov uporabnika iz Firestore
       final watchedCollection = await firestore
           .collection('users')
           .doc(userId)
           .collection('Watched')
           .get();
 
-      // Pripravi seznam desetletij od leta 1900 do trenutnega desetletja
       final currentYear = DateTime.now().year;
       final decades = List.generate((currentYear - 1900) ~/ 10 + 1, (index) => 1900 + index * 10);
 
-      // Preveri, ali ima uporabnik filme iz vsakega desetletja
       final Set<int> coveredDecades = {};
       for (var doc in watchedCollection.docs) {
         final releaseDate = doc.data()['release_date'] as String?;
@@ -243,23 +232,19 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
         }
       }
 
-      // Preveri, ali so zajeta vsa desetletja
       if (decades.every((decade) => coveredDecades.contains(decade))) {
-        // Preveri, če obstaja kolekcija značk, in dodaj značko
         final badgesRef = firestore.collection('users').doc(userId).collection('badges');
         final badgesDoc = await badgesRef.doc('badgeList').get();
 
         if (badgesDoc.exists) {
-          // Če značke že obstajajo, jih posodobi
           final List<dynamic> badges = badgesDoc.data()?['badges'] ?? [];
           if (!badges.contains("Retro Fan")) {
             badges.add("Retro Fan");
             await badgesRef.doc('badgeList').update({'badges': badges});
-            _showBadgeEarned(context, "Retro Fan");
+            _showBadgeEarned("Retro Fan");
 
           }
         } else {
-          // Če značke še ne obstajajo, jih ustvari
           await badgesRef.doc('badgeList').set({
             'badges': ["Retro Fan"],
           });
@@ -377,23 +362,19 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Pridobi vse ocene iz zbirke 'ratings'
         final ratingsSnapshot = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .collection('ratings')
             .get();
 
-        // Preštej filme z oceno 2 ali manj
         final lowRatingsCount = ratingsSnapshot.docs
             .where((doc) => doc.data()['rating'] != null && doc.data()['rating'] <= 2)
             .length;
 
         print('Število filmov z oceno 2 ali manj: $lowRatingsCount');
 
-        // Če je uporabnik dal oceno 2 ali manj desetim ali več filmom
-        if (lowRatingsCount >= 3) {
-          // Dodaj značko "High Standards" v zbirko badges
+        if (lowRatingsCount >= 10) {
           await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
@@ -404,7 +385,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
           }, SetOptions(merge: true));
 
           print('Badge "High Standards" added.');
-          _showBadgeEarned(context, "High Standards");
+          _showBadgeEarned("High Standards");
         } else {
           print('User has not rated enough movies 2 or less for "High Standards" badge.');
         }
@@ -421,7 +402,6 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
   void _showRatingModal(BuildContext context, Map<String, dynamic> movieDetails) {
     final TextEditingController ratingController = TextEditingController();
 
-    // Preverimo, ali je widget še vedno prikazan
     if (!mounted) return;
 
     showDialog(
@@ -451,13 +431,11 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
               onPressed: () {
                 final rating = double.tryParse(ratingController.text);
                 if (rating != null && rating >= 1 && rating <= 10) {
-                  // Preverimo, ali je widget še vedno prikazan, preden posodobimo stanje
                   if (mounted) {
-                    _rateMovie(context, rating, movieDetails); // Posredujemo context in movieDetails.
+                    _rateMovie(context, rating, movieDetails);
                     Navigator.pop(context);
                   }
                 } else {
-                  // Preverimo, če je widget še vedno prikazan, preden prikažemo SnackBar
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Please enter a valid rating between 1 and 10!')),
@@ -603,7 +581,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                 ElevatedButton(
                   onPressed: () {
                     if (movieDetails != null) {
-                      _showRatingModal(context, movieDetails!); // Posredujemo movieDetails.
+                      _showRatingModal(context, movieDetails!);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Movie details not available')),

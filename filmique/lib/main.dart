@@ -10,18 +10,20 @@ import 'login.dart';
 import 'app_theme.dart';
 import 'no-internet.dart';
 
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await dotenv.load();
 
-  // Check internet connection
   final hasInternet = await checkInternetConnection();
 
   runApp(MyApp(hasInternet: hasInternet));
 }
 
-// Function to check internet connection
 Future<bool> checkInternetConnection() async {
   try {
     final result = await InternetAddress.lookup('google.com');
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Filmique',
       theme: AppTheme.theme,
+      navigatorKey: navigatorKey,
       routes: {
         '/home': (context) => const MainPage(),
         '/login': (context) => const LoginPage(),
